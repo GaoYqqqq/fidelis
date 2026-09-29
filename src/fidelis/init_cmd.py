@@ -569,10 +569,19 @@ def cmd_init(args) -> int:
     system = platform.system()
 
     if args.uninstall:
+        # Uninstall must target the label install used: SERVICE_LABEL by default,
+        # or the explicit --label.
+        label = getattr(args, "label", None)
         if system == "Darwin":
-            return _install_macos(uninstall=True, migrate_legacy=args.migrate)
+            return _install_macos(uninstall=True, migrate_legacy=args.migrate, label=label)
         elif system == "Linux":
-            return _install_linux(uninstall=True)
+            rc = _install_linux(uninstall=True, label=label or SERVICE_LABEL)
+            # Units created before the label was passed on install were named
+            # after the bare service; remove one only if it is actually there.
+            legacy_unit = Path.home() / ".config/systemd/user/fidelis-server.service"
+            if rc == 0 and label is None and legacy_unit.exists():
+                rc = _install_linux(uninstall=True, label="fidelis-server")
+            return rc
         else:
             return _install_fallback(uninstall=True)
 
