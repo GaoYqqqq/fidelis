@@ -556,6 +556,17 @@ def _ollama_preflight() -> int:
     return 0
 
 
+_LABEL_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+def _label_error(label: str | None) -> int | None:
+    """Return exit code 2 (after printing) if an explicit --label is not a plain identifier."""
+    if label is not None and not _LABEL_RE.fullmatch(label):
+        print(f"ERROR: invalid --label {label!r}: use letters, digits, '.', '_' or '-'", file=sys.stderr)
+        return 2
+    return None
+
+
 def cmd_init(args) -> int:
     """Install + start fidelis-server as a system service.
 
@@ -569,12 +580,20 @@ def cmd_init(args) -> int:
     system = platform.system()
 
     if args.uninstall:
+        # Uninstall must target the label install used: SERVICE_LABEL by default,
+        # or the explicit --label.
+        label = getattr(args, "label", None) or None  # empty --label means default, as on install
+        if (rc := _label_error(label)) is not None:
+            return rc
         if system == "Darwin":
-            return _install_macos(uninstall=True, migrate_legacy=args.migrate)
+            return _install_macos(uninstall=True, migrate_legacy=args.migrate, label=label)
         elif system == "Linux":
-            return _install_linux(uninstall=True)
+            return _install_linux(uninstall=True, label=label or SERVICE_LABEL)
         else:
             return _install_fallback(uninstall=True)
+
+    if (rc := _label_error(getattr(args, "label", None) or None)) is not None:
+        return rc
 
     # Preflight: refuse to install a service that we know will crash at first
     # write because Ollama isn't running or the embed model isn't pulled.
