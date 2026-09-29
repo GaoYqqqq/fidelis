@@ -94,3 +94,16 @@ def test_empty_label_means_default_as_on_install(linux_env):
     unit = _unit(home, init_cmd.SERVICE_LABEL)
     assert init_cmd.cmd_init(_args(label="")) == 0
     assert not unit.exists()
+
+
+@pytest.mark.parametrize("bad", ["/tmp/x", "../x", "a/b", "-x", "a b"])
+def test_install_rejects_the_same_invalid_labels(linux_env, monkeypatch, bad):
+    home, calls = linux_env
+
+    def _boom(*a, **k):
+        raise AssertionError("install must reject the label before any preflight or write")
+
+    monkeypatch.setattr(init_cmd, "_ollama_preflight", _boom)
+    assert init_cmd.cmd_init(_args(uninstall=False, label=bad)) == 2
+    assert calls == []
+    assert list((home / ".config/systemd/user").iterdir()) == []
