@@ -63,12 +63,30 @@ def test_uninstall_honours_custom_label(linux_env):
     assert ["systemctl", "--user", "stop", "fidelis-second.service"] in calls
 
 
-def test_uninstall_still_removes_a_bare_legacy_unit(linux_env):
+def test_default_uninstall_leaves_a_separately_labelled_fidelis_server_unit(linux_env):
     home, calls = linux_env
-    legacy = _unit(home, "fidelis-server")
+    default = _unit(home, init_cmd.SERVICE_LABEL)
+    other = _unit(home, "fidelis-server")
     assert init_cmd.cmd_init(_args()) == 0
+    assert not default.exists()
+    assert other.exists()
+    assert ["systemctl", "--user", "stop", "fidelis-server.service"] not in calls
+
+
+def test_unit_created_without_a_label_is_removed_with_explicit_label(linux_env):
+    home, _ = linux_env
+    legacy = _unit(home, "fidelis-server")
+    assert init_cmd.cmd_init(_args(label="fidelis-server")) == 0
     assert not legacy.exists()
-    assert ["systemctl", "--user", "stop", "fidelis-server.service"] in calls
+
+
+@pytest.mark.parametrize("bad", ["/tmp/x", "../x", "a/b", "-x", "a b"])
+def test_invalid_label_is_rejected_before_touching_anything(linux_env, bad):
+    home, calls = linux_env
+    unit = _unit(home, init_cmd.SERVICE_LABEL)
+    assert init_cmd.cmd_init(_args(label=bad)) == 2
+    assert unit.exists()
+    assert calls == []
 
 
 def test_empty_label_means_default_as_on_install(linux_env):
