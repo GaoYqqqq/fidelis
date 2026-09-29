@@ -44,6 +44,8 @@ fidelis recall-hybrid "Atlas billing migration retry condition" --tier zero_llm
 
 Look for both the rollback and the retry condition in the retrieved text. This is retrieval of a saved note, not a generated answer. For your own files, replace `"$demo_dir"` with a notes directory. If retrieval fails, run `fidelis health` and confirm Ollama has `nomic-embed-text` available. Keep the virtual environment after `fidelis init`; the background service uses it.
 
+What this changes on your machine: `fidelis init` installs a per-user background service (launchd on macOS, `systemd --user` on Linux) that starts `fidelis-server` automatically at login. `fidelis watch` sends the note to that server, which saves it in the local store at `~/.cogito/store` (or the path in `COGITO_STORE_PATH`), not in the temporary demo directory. The watcher also records ingested files in `~/.fidelis/watched.json`. To remove the service, run `fidelis init --uninstall`; it stops the service and deletes the launchd plist or systemd unit only. It does not delete the store or that ledger, so remove `~/.cogito/store` yourself if you want the demo note gone.
+
 ## Connect an agent
 
 Once the note is retrievable locally, install the MCP connection for your client:
