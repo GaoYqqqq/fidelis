@@ -2,7 +2,11 @@
 
 Cross-platform:
 - macOS: launchd plist at ~/Library/LaunchAgents/ai.hermeslabs.fidelis-server.plist
-- Linux: systemd user unit at ~/.config/systemd/user/fidelis-server.service
+- Linux: systemd user unit at ~/.config/systemd/user/<label>.service. cmd_init always
+  passes SERVICE_LABEL (or --label) as <label>, so a default install creates
+  ~/.config/systemd/user/ai.hermeslabs.fidelis-server.service. (The bare
+  "fidelis-server" default inside _install_linux is used only if that helper is
+  called with no label, which cmd_init never does.)
 - Other: fallback to nohup (best-effort, no auto-start on reboot)
 
 Idempotent: re-running install upgrades the unit in place. Uninstall removes
