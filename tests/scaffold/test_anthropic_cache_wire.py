@@ -23,11 +23,20 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import httpx
 import pytest
 
 import anthropic
 from anthropic.types import TextBlockParam
+
+# anthropic >= 1.x builds on ``httpx2``; earlier releases build on ``httpx``. Mock
+# transport must come from whichever the installed SDK's own default client uses.
+try:
+    import httpx2 as httpx
+
+    if not issubclass(anthropic.DefaultHttpxClient, httpx.Client):
+        raise ImportError("installed anthropic SDK uses httpx")
+except ImportError:
+    import httpx
 
 from fidelis.scaffold import SCAFFOLD_OPEN, wrap_system_prompt
 
