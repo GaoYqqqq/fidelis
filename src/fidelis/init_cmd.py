@@ -571,7 +571,7 @@ def cmd_init(args) -> int:
     if args.uninstall:
         # Uninstall must target the label install used: SERVICE_LABEL by default,
         # or the explicit --label.
-        label = getattr(args, "label", None)
+        label = getattr(args, "label", None) or None  # empty --label means default, as on install
         if system == "Darwin":
             return _install_macos(uninstall=True, migrate_legacy=args.migrate, label=label)
         elif system == "Linux":

@@ -69,3 +69,10 @@ def test_uninstall_still_removes_a_bare_legacy_unit(linux_env):
     assert init_cmd.cmd_init(_args()) == 0
     assert not legacy.exists()
     assert ["systemctl", "--user", "stop", "fidelis-server.service"] in calls
+
+
+def test_empty_label_means_default_as_on_install(linux_env):
+    home, _ = linux_env
+    unit = _unit(home, init_cmd.SERVICE_LABEL)
+    assert init_cmd.cmd_init(_args(label="")) == 0
+    assert not unit.exists()
