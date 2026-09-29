@@ -2,7 +2,7 @@
 
 Cross-platform:
 - macOS: launchd plist at ~/Library/LaunchAgents/ai.hermeslabs.fidelis-server.plist
-- Linux: systemd user unit at ~/.config/systemd/user/fidelis-server.service
+- Linux: systemd user unit at ~/.config/systemd/user/ai.hermeslabs.fidelis-server.service
 - Other: fallback to nohup (best-effort, no auto-start on reboot)
 
 Idempotent: re-running install upgrades the unit in place. Uninstall removes
