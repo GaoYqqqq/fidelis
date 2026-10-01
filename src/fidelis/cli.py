@@ -53,7 +53,7 @@ def _server_error(exc: BaseException) -> None:
     sys.exit(1)
 
 
-def _post(path: str, payload: dict) -> dict:
+def _post(path: str, payload: dict, *, structured_errors: bool = False) -> dict:
     data = json.dumps(payload).encode()
     req = urllib.request.Request(
         f"{_base_url()}{path}",
@@ -65,6 +65,8 @@ def _post(path: str, payload: dict) -> dict:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
+        if not structured_errors:
+            _server_error(e)
         try:
             body = json.loads(e.read())
         except (OSError, json.JSONDecodeError):
@@ -256,7 +258,7 @@ def _print_chain(entries: list, label: str) -> None:
 
 
 def cmd_get(args):
-    result = _post("/get", {"id": args.record_id})
+    result = _post("/get", {"id": args.record_id}, structured_errors=True)
     _raise_response_error(result, raw=args.raw)
     if args.raw:
         print(json.dumps(result, indent=2))
@@ -287,7 +289,7 @@ def cmd_recent(args):
     payload = {"limit": args.limit, "kind": args.kind}
     if args.since is not None:
         payload["since"] = args.since
-    result = _post("/recent", payload)
+    result = _post("/recent", payload, structured_errors=True)
     _raise_response_error(result, raw=args.raw)
     if args.raw:
         print(json.dumps(result, indent=2))
